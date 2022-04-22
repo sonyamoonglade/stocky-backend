@@ -42,7 +42,8 @@ export class UsersService {
       const createdUser = rows[0]
       return res.status(201).send({error: '', result: [createdUser]})
     }catch (e) {
-      throw new HttpException('something went wrong', HttpStatus.BAD_REQUEST)
+      return res.status(500).send({error:'server error', result:[]})
+
     }
 
 
@@ -52,21 +53,19 @@ export class UsersService {
   }
 
   async getUserById(id:number, res:Response):Promise<Response>{
+
     const selectSql = this.qb.ofTable(users).select<User>({where:{id}})
 
     const {rows} = await this.db.query(selectSql)
-
     if(!rows[0]) throw new UserDoesNotExistException(id)
 
     const user = rows[0]
 
     return res.status(200).send({error:'', result:[user]})
 
-
   }
 
   async deleteUserById(id: number, res:Response):Promise<Response>{
-
 
     const selectSql = this.qb.ofTable(users).select<User>({where:{id}})
 
@@ -78,15 +77,31 @@ export class UsersService {
       await this.db.query(deleteSql)
       return res.status(204).send({error:'',result:[]})
     }catch (e) {
-      throw new HttpException('something went wrong',HttpStatus.BAD_GATEWAY)
+      return res.status(500).send({error:'server error', result:[]})
+
     }
 
   }
 
   async updateUser(id:number,res:Response, newUser:Partial<User>){
 
-    const updateSql = this.qb.ofTable(users).update<User>({where:{id:id},set:newUser})
-    console.log(updateSql);
+    const selectSql = this.qb.ofTable(users).select<User>({where:{id}})
+    const {rows} = await this.db.query(selectSql)
+    if(!rows[0]) throw new UserDoesNotExistException(id)
+
+    try {
+      const updateSql = this.qb.ofTable(users).update<User>({where:{id:id},set:newUser})
+      const {rows} = await this.db.query(updateSql)
+      const updatedUser = rows[0]
+      return res.status(200).send({error:'', result:[updatedUser]})
+
+    }catch (e) {
+      return res.status(500).send({error:'server error', result:[]})
+    }
+
+
+
+
 
   }
 
