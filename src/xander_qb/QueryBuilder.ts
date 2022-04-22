@@ -1,3 +1,5 @@
+import e from "express";
+import { find, findIndex } from "rxjs";
 
 interface filter<T> {
     where: Partial<T>
@@ -81,7 +83,7 @@ export class QueryBuilder  {
                 assignment = `${key} = ${value}${separatorBasedOnIsForSet}`
             }
             else if(typeof value == 'string' && i !== values.length -1) {
-                 assignment = `${key} = '${value}' ${separatorBasedOnIsForSet}`
+                 assignment = `${key} = '${value}'${separatorBasedOnIsForSet}`
             }
             else {
                 if (typeof value != 'string') assignment = `${key} = ${value}`
@@ -99,26 +101,26 @@ export class QueryBuilder  {
     }
 
     public insert<Entity>(insertedObject: Entity): (string | any)[]{
-        console.log(insertedObject);
         const [valuesSQL,typedValuesArray] = QueryBuilder.makeInsertValuesSql<Entity>(insertedObject)
         const joinedKeysOfInsertedObject = Object.keys(insertedObject).join(',')
-        const SQL = `insert into ${this.getTableName} (${joinedKeysOfInsertedObject}) ${valuesSQL}`
+        const SQL = `insert into ${this.getTableName} (${joinedKeysOfInsertedObject}) ${valuesSQL} returning *`
         return [SQL, typedValuesArray]
     }
 
     public select<Entity>(expression?: filter<Entity>){
         // expression:{where : {id:0, name:'artem'} }
-        let sql;
         if(!expression) return `select * from ${this.getTableName}`
-        const conditions = expression?.where
+
         const returning = expression?.returning
+        const target = expression.where
 
+        target['id'] = Number(target['id'])
+        const keys = Object.keys(target)
+        const values = Object.values(target)
 
-        const keys = Object.keys(conditions)
-        const values = Object.values(conditions)
+        let sql;
 
         const whereStatement = QueryBuilder.generateAssignments(keys,values, false)
-        console.log(whereStatement);
         if(returning == '*'){
             sql = `select * from ${this.getTableName} where ${whereStatement}`
 
@@ -130,7 +132,6 @@ export class QueryBuilder  {
         }
         else {
             sql = `select * from ${this.getTableName} where ${whereStatement}`
-            console.log('here3');
         }
 
         return sql
@@ -139,10 +140,10 @@ export class QueryBuilder  {
     }
 
     public delete<Entity>(expression : Pick<filter<Entity>,'where'>){
-        const conditions = expression.where
-
-        const keys = Object.keys(conditions)
-        const values = Object.values(conditions)
+        const target = expression.where
+        target['id'] = Number(target['id'])
+        const keys = Object.keys(target)
+        const values = Object.values(target)
 
         const whereStatement = QueryBuilder.generateAssignments(keys,values)
         const sql = `delete from ${this.getTableName} where ${whereStatement}`
@@ -150,11 +151,15 @@ export class QueryBuilder  {
         return sql
     }
 
-    public update<Entity>(expression: Partial<filter<Entity>>){
+    public update<Entity>(expression: filter<Entity>){
 
-        const conditions = expression.where
-        const whereKeys = Object.keys(conditions)
-        const whereValues = Object.values(conditions)
+        const target = expression.where
+        target['id'] = Number(target['id'])
+
+        const whereKeys = Object.keys(target)
+        let whereValues = Object.values(target)
+
+
 
         const whereStatement = QueryBuilder.generateAssignments(whereKeys,whereValues)
 
