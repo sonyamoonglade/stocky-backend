@@ -113,8 +113,8 @@ export class QueryBuilder  {
 
         const returning = expression?.returning
         const target = expression.where
+        if(target['id']) target['id'] = Number(target['id'])
 
-        target['id'] = Number(target['id'])
         const keys = Object.keys(target)
         const values = Object.values(target)
 

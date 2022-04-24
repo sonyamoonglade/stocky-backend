@@ -5,3 +5,7 @@ export enum CurrencyType {
   RUB = "₽",
   EURO = "€"
 }
+
+export interface modifiedRequest extends Request {
+  user_id: number
+}

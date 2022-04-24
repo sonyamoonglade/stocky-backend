@@ -40,7 +40,8 @@ exports.up = pgm => {
   pgm.createIndex('broker_accounts','user_id')
 };
 
-exports.up = pgm => {};
+exports.down = pgm => {
+  pgm.dropConstraint('broker_accounts','broker_accounts_user_id_fkey')
+  pgm.dropTable('broker_accounts')
 
-
-exports.down = pgm => {};
+};

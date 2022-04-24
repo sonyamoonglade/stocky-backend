@@ -1,4 +1,4 @@
-import { HttpException, HttpService, HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { HttpException, HttpService, HttpStatus, Inject, Injectable, Req, Res } from "@nestjs/common";
 
 import { PoolClient } from "pg";
 import * as bcrypt from 'bcrypt'
@@ -6,50 +6,47 @@ require('dotenv').config()
 
 import { pg_conn } from "../database/provider-name";
 import { query_builder } from "../xander_qb/provider-name";
-import { UserAlreadyExistsException, UserDoesNotExistException } from "../exceptions/user-exceptions";
+import { UserAlreadyExistsException, UserDoesNotExistException } from "../exceptions/user.exceptions";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { QueryBuilder } from "../xander_qb/QueryBuilder";
 import { User,users } from "../entities/User";
-import { Response } from "express";
+import { Request, Response } from "express";
+import { UnexpectedServerError } from "../exceptions/unexpected-errors.exceptions";
+import { LoginUserDto } from "./dto/login-user.dto";
 
 @Injectable()
 export class UsersService {
 
   private SALT_ROUNDS: number = Number(process.env.SALT_ROUNDS)
-  private HASH_SECRET: string = process.env.HASH_SECRET
 
 
   constructor(@Inject(pg_conn) private db:PoolClient, @Inject(query_builder) private qb:QueryBuilder) {
 
   }
 
+  async login(res:Response, loginUserDto:LoginUserDto){
 
-  async createUser(user:CreateUserDto, res:Response):Promise<Response>{
+  }
+
+  async createUser(user:CreateUserDto, res:Response):Promise<Response | User>{
 
     const userExists = await this.isUserAlreadyExist(user)
     if(userExists) throw new UserAlreadyExistsException()
 
     try {
-
       const passwordHash = await bcrypt.hash(user.password,this.SALT_ROUNDS)
       const newUser:User = {
         ...user,
         password: passwordHash
       }
-
       const [insertSql,insertValues] = this.qb.ofTable(users).insert<User>(newUser)
-      const {rows} = await this.db.query(insertSql,insertValues)
+      const {rows}  = await this.db.query(insertSql,insertValues)
       const createdUser = rows[0]
+
       return res.status(201).send({error: '', result: [createdUser]})
     }catch (e) {
-      return res.status(500).send({error:'server error', result:[]})
-
+      throw new UnexpectedServerError()
     }
-
-
-
-
-
   }
 
   async getUserById(id:number, res:Response):Promise<Response>{
@@ -66,7 +63,7 @@ export class UsersService {
   }
 
   async deleteUserById(id: number, res:Response):Promise<Response>{
-
+    // TODO: apply middlewares to check if aleady exist
     const selectSql = this.qb.ofTable(users).select<User>({where:{id}})
 
     const {rows} = await this.db.query(selectSql)
@@ -77,8 +74,7 @@ export class UsersService {
       await this.db.query(deleteSql)
       return res.status(204).send({error:'',result:[]})
     }catch (e) {
-      return res.status(500).send({error:'server error', result:[]})
-
+      throw new UnexpectedServerError()
     }
 
   }
@@ -96,13 +92,21 @@ export class UsersService {
       return res.status(200).send({error:'', result:[updatedUser]})
 
     }catch (e) {
-      return res.status(500).send({error:'server error', result:[]})
+      throw new UnexpectedServerError()
     }
 
 
 
 
 
+  }
+
+  async getAllUsers(res: Response, @Req() req: Request){
+    const selectSql = this.qb.ofTable(users).select<User>()
+    const {rows} = await this.db.query(selectSql)
+
+
+    return res.status(200).send({error:'', result: rows})
   }
 
 

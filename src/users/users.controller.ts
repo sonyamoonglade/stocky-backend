@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Res } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, Res, UseGuards } from "@nestjs/common";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UsersService } from "./users.service";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { User } from "../entities/User";
 
 @Controller('/api/users')
@@ -30,6 +30,11 @@ export class UsersController {
   @Put('/updateUser/:id')
   updateUser(@Param('id') id:number, @Res() res:Response, @Body() newUser: Partial<User>){
     return this.userService.updateUser(id,res,newUser)
+  }
+
+  @Get('/getAllUsers')
+  getAllUsers(@Res() res: Response, @Req() req:Request){
+    return this.userService.getAllUsers(res,req)
   }
 
 }

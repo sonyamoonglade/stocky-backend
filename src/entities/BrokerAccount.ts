@@ -3,12 +3,12 @@ import { CurrencyType } from "../shared/types/types";
 
 
 export class BrokerAccount {
-  id: number
+  id?: number
   user_id: number
   name: string
   account_name: string
-  asset_quantity: number
-  balance: number
+  asset_quantity?: number
+  balance?: number
   currency_type: CurrencyType
 
   constructor(

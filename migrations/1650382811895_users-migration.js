@@ -25,31 +25,19 @@ exports.up = pgm => {
       type:'varchar(255)',
       notNull: true
     },
-    passwordHint:{
+    password_hint:{
       type:'varchar(255)',
       default: ''
     },
-    hasBrokerAccount:{
+    has_broker_account:{
       type:'boolean',
       default: false
     },
-    dollarBalance:{
-      type:'numeric',
-      default: 0
-    },
-    rubBalance:{
-      type:'numeric',
-      default: 0
-    },
-    euroBalance:{
-      type:'numeric',
-      default: 0
-    },
-    subscribedToNotifications:{
+    subscribed_to_notifications:{
       type:'boolean',
       default: false
     },
-    dataOfBirth:{
+    date_of_birth:{
       type:'string',
       notNull: true
     }
@@ -57,5 +45,10 @@ exports.up = pgm => {
 };
 
 exports.down = pgm => {
-  pgm.dropTable('users')
+
+
+  pgm.dropTable('users', {
+    cascade: true
+  })
+
 };

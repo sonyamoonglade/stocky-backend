@@ -5,20 +5,20 @@ export class User {
   firstname: string
   lastname: string
   password: string
-  password_hint?: string = ''
+  password_hint?: string
   date_of_birth: string
-  has_broker_account?: boolean = false
-  subscribed_to_notifications?: boolean = false
-  broker_accounts_number?: number = 0
-  total_asset_quantity?: number = 0
+  has_broker_account?: boolean
+  subscribed_to_notifications?: boolean
+  broker_accounts_number?: number
+  total_asset_quantity?: number
 
 
-  constructor(firstname?: string, password?: string, date_of_birth?: string, password_hint?: string, lastname?: string) {
+  constructor(firstname?: string, password?: string, date_of_birth?: string,lastname?: string, password_hint?: string) {
     this.firstname = firstname;
+    this.lastname = lastname
     this.password = password;
     this.date_of_birth = date_of_birth;
     this.password_hint = password_hint
-    this.lastname = lastname
   }
 }
 
