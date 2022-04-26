@@ -4,7 +4,7 @@ import { UsersService } from "./users.service";
 import { Request, Response } from "express";
 import { User } from "../entities/User";
 
-@Controller('/api/users')
+@Controller('/api/v1/users')
 export class UsersController {
 
 

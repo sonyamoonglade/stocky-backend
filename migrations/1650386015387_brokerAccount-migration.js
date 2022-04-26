@@ -32,10 +32,6 @@ exports.up = pgm => {
       notNull: true,
       default: 0
     },
-    account_name:{
-      type: 'varchar(255)',
-      notNull: true
-    }
   })
   pgm.createIndex('broker_accounts','user_id')
 };

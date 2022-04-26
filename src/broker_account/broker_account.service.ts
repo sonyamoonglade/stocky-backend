@@ -4,31 +4,33 @@ import { PoolClient } from "pg";
 import { query_builder } from "../xander_qb/provider-name";
 import { QueryBuilder } from "../xander_qb/QueryBuilder";
 import { Response } from "express";
-import { CreateBrokerAccountDto } from "./create-broker_account.dto";
+import { CreateBrokerAccountDto } from "./dto/create-broker_account.dto";
 import { broker_accounts, BrokerAccount } from "../entities/BrokerAccount";
 import { modifiedRequest } from "../shared/types/types";
 import { BrokerAccountDoesNotExist, BrokerAccountWithNameAlreadyExists } from "../exceptions/broker_account.exceptions";
 import { UnexpectedServerError } from "../exceptions/unexpected-errors.exceptions";
+import { SessionService } from "../authentication/session/session.service";
+import { unix } from "dayjs";
 
 @Injectable()
 export class BrokerAccountService {
 
-  constructor(@Inject(pg_conn) private db:PoolClient, @Inject(query_builder) private qb:QueryBuilder) {
+  constructor(@Inject(pg_conn) private db:PoolClient,
+              @Inject(query_builder) private qb:QueryBuilder) {
   }
 
 
   async createBrokerAccount(req: modifiedRequest,
                             res:Response,
                             createAccountDto:CreateBrokerAccountDto):Promise<Response>{
-
-    const {user_id} = req
-
+    const {user_id,username} = req.session
     const {name} = createAccountDto
-    const brokerAccountWithNameExist = this.isBrokerAccountWithNameAlreadyExists(name,user_id)
-    if(!brokerAccountWithNameExist) throw new BrokerAccountWithNameAlreadyExists(name,user_id)
+
+    if(!await this.doesBrokerAccountWithNameAlreadyExist(name,user_id)) return
 
     try {
-      const [insertSql, values] = this.qb.ofTable(broker_accounts).insert<BrokerAccount>(createAccountDto)
+      const [insertSql, values] = this.qb.ofTable(broker_accounts).insert<BrokerAccount>(
+        {...createAccountDto,user_id })
       const {rows} = await this.db.query(insertSql, values)
       const createdAccount = rows[0]
       return res.status(201).send({error:'', result: [createdAccount]})
@@ -84,16 +86,16 @@ export class BrokerAccountService {
 
   }
 
-  private async isBrokerAccountWithNameAlreadyExists(name: string, user_id: number): Promise<boolean>{
+  private async doesBrokerAccountWithNameAlreadyExist(name: string, user_id: number): Promise<undefined | boolean>{
 
     const selectSql = this.qb.ofTable(broker_accounts).select<BrokerAccount>({where:{name, user_id}})
     try {
       const {rows} = await this.db.query(selectSql)
-      if(!rows.length) return false
+      if(!rows.length) return true
     }catch (e) {
-      return false
+      throw new UnexpectedServerError()
     }
-    return true
+    throw new BrokerAccountWithNameAlreadyExists(name,user_id)
   }
 
 

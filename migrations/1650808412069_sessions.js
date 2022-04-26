@@ -4,8 +4,9 @@ exports.shorthands = undefined;
 
 exports.up = pgm => {
   pgm.createTable('sessions',{
-    id: {
-      type:'varchar(255)',
+    session_id: {
+      type:'varchar(500)',
+      unique: true
     },
     user_id: {
       type: 'int',
@@ -18,7 +19,7 @@ exports.up = pgm => {
       notNull: true
     },
     ttl: {
-      type: 'bigint',
+      type: 'varchar(255)',
       notNull: true
     },
   })

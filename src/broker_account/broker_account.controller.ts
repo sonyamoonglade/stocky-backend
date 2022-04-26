@@ -1,10 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, Res } from "@nestjs/common";
 import { Response } from "express";
-import { CreateBrokerAccountDto } from "./create-broker_account.dto";
+import { CreateBrokerAccountDto } from "./dto/create-broker_account.dto";
 import { BrokerAccountService } from "./broker_account.service";
 import { BrokerAccount } from "../entities/BrokerAccount";
 
-@Controller('/api/v1/broker-accounts')
+@Controller('/api/v1/broker')
 export class BrokerAccountController {
 
   constructor(private brokerAccountService:BrokerAccountService) {

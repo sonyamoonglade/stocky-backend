@@ -1,3 +1,4 @@
+import { Session } from "../../entities/Session";
 
 
 export enum CurrencyType {
@@ -7,5 +8,5 @@ export enum CurrencyType {
 }
 
 export interface modifiedRequest extends Request {
-  user_id: number
+  session: Session
 }

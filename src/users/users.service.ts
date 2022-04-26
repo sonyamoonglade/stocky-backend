@@ -13,6 +13,9 @@ import { User,users } from "../entities/User";
 import { Request, Response } from "express";
 import { UnexpectedServerError } from "../exceptions/unexpected-errors.exceptions";
 import { LoginUserDto } from "./dto/login-user.dto";
+import { SessionService } from "../authentication/session/session.service";
+import convertToUsername from "../shared/utils/utils";
+import { UsersRepository } from "./users.repository";
 
 @Injectable()
 export class UsersService {
@@ -20,7 +23,10 @@ export class UsersService {
   private SALT_ROUNDS: number = Number(process.env.SALT_ROUNDS)
 
 
-  constructor(@Inject(pg_conn) private db:PoolClient, @Inject(query_builder) private qb:QueryBuilder) {
+  constructor(@Inject(pg_conn) private db:PoolClient,
+              @Inject(query_builder) private qb:QueryBuilder,
+              private sessionService:SessionService,
+              private usersRepository:UsersRepository) {
 
   }
 
@@ -35,13 +41,11 @@ export class UsersService {
 
     try {
       const passwordHash = await bcrypt.hash(user.password,this.SALT_ROUNDS)
-      const newUser:User = {
-        ...user,
-        password: passwordHash
-      }
-      const [insertSql,insertValues] = this.qb.ofTable(users).insert<User>(newUser)
-      const {rows}  = await this.db.query(insertSql,insertValues)
-      const createdUser = rows[0]
+      const createdUser = await this.usersRepository.save({...user,password: passwordHash})
+      const username = convertToUsername(createdUser.firstname,createdUser.lastname)
+      // TODO: stick session to user and return set-cookie
+      const SID:string = await this.sessionService.createSession(createdUser.id,username)
+      await this.sessionService.attachCookieToResponse(res,SID)
 
       return res.status(201).send({error: '', result: [createdUser]})
     }catch (e) {
@@ -51,12 +55,8 @@ export class UsersService {
 
   async getUserById(id:number, res:Response):Promise<Response>{
 
-    const selectSql = this.qb.ofTable(users).select<User>({where:{id}})
-
-    const {rows} = await this.db.query(selectSql)
-    if(!rows[0]) throw new UserDoesNotExistException(id)
-
-    const user = rows[0]
+    const user = await this.usersRepository.getById(id)
+    if(!user) throw new UserDoesNotExistException(id)
 
     return res.status(200).send({error:'', result:[user]})
 

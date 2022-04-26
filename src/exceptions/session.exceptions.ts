@@ -8,3 +8,10 @@ export class SessionHasExpiredException extends HttpException{
   }
 
 }
+
+export class SessionIdHasNotBeenProvidedException extends HttpException{
+
+  constructor() {
+    super('session id has not been provided', HttpStatus.UNAUTHORIZED);
+  }
+}

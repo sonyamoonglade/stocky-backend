@@ -1,10 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { QueryBuilder } from "../../xander_qb/QueryBuilder";
 import { PoolClient } from "pg";
-import { Session } from "../../entities/Session";
-import * as dayjs from 'dayjs'
+import { Session, sessions } from "../../entities/Session";
+import * as dayjs from "dayjs";
 import { query_builder } from "../../xander_qb/provider-name";
 import { pg_conn } from "../../database/provider-name";
+import { SessionRepository } from "./session.repository";
+import { Response } from "express";
+import { UnexpectedServerError } from "../../exceptions/unexpected-errors.exceptions";
+
 const SimpleCrypto = require("simple-crypto-js").default
 
 @Injectable()
@@ -15,54 +19,72 @@ export class SessionService {
   private crypt = new SimpleCrypto(this.SECRET)
 
 
-  constructor(@Inject(query_builder)private qb:QueryBuilder, @Inject(pg_conn)private db:PoolClient) {
+  constructor(@Inject(query_builder) private qb:QueryBuilder,
+              @Inject(pg_conn) private db:PoolClient,
+              private sessionRepository:SessionRepository) {}
 
-  }
 
-
-  async createSession(user_id: number, username: string){
+  async createSession(user_id: number, username: string):Promise<string>{
 
     const currentTime = dayjs()
-    const nextDayUnix = currentTime.add(1,'day').unix()
+    const nextDayTTL = currentTime.add(1,'day').toString()
 
-    const encryptedSID = this.crypt.encrypt(currentTime.toString())
+    const sessionId = currentTime.unix().toString()
 
-    console.log(encryptedSID);
+    try {
+      const encryptedSID = this.crypt.encrypt(sessionId)
 
-
-
-    const newSession: Session = {
-      id: encryptedSID,
-      user_id,
-      ttl: nextDayUnix,
-      username,
-    }
-
-
-  }
-
-  async isSessionExistAndValid(SID: string):Promise<Session | undefined>{
-
-      const selectQuery = this.qb.select<Session>({where:{id:SID}})
-      const {rows} = await this.db.query(selectQuery)
-
-      const session = rows[0] as Session
-
-      const ttl = session.ttl
-      const currentTime = Date.now()
-
-      if(Number(ttl) - currentTime > 0){
-        return session
+      const newSession: Session = {
+        session_id: sessionId,
+        user_id,
+        ttl: nextDayTTL,
+        username,
       }
 
-      return undefined
+      await this.sessionRepository.save(newSession)
 
-
-
-
-
+      return encryptedSID
+    }catch (e) {
+      throw new UnexpectedServerError()
+    }
 
   }
+
+  async attachCookieToResponse(res:Response,SID: string): Promise<void>{
+
+    res.cookie('SID',SID,{
+      httpOnly: true,
+      sameSite: true
+    })
+
+  }
+
+  // async getSessionByEncryptedSID(SID: string):Promise<Session>{
+  //   const decryptedId = this.crypt.decrypt(SID)
+  //   return await this.sessionRepository.getById(decryptedId)
+  // }
+
+  async doesSessionExistAndIsValid(SID: string):Promise<Session | undefined>{
+
+    const sessionId = this.crypt.decrypt(SID).toString()
+
+    const selectQuery = this.qb.ofTable(sessions).select<Session>({where:{session_id:sessionId}})
+
+
+    const {rows} = await this.db.query(selectQuery)
+    const session = rows[0] as Session
+
+    const sessionTTL = dayjs(session.ttl).unix()
+    const currentTime = dayjs().unix()
+    
+    if(sessionTTL - currentTime < 0){
+      return session
+    }
+
+    return undefined
+
+  }
+
 
 
 

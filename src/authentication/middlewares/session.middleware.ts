@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware } from "@nestjs/common";
 import { Request, Response } from "express";
 import { SessionService } from "../session/session.service";
-import { SessionHasExpiredException } from "../../exceptions/session.exceptions";
+import { SessionHasExpiredException, SessionIdHasNotBeenProvidedException } from "../../exceptions/session.exceptions";
 
 @Injectable()
 export class SessionMiddleware implements NestMiddleware{
@@ -9,15 +9,15 @@ export class SessionMiddleware implements NestMiddleware{
   constructor(private sessionService:SessionService) {
   }
 
-  use(req: any, res: Response, next: (error?: any) => void): any {
+  async use(req: any, res: Response, next: (error?: any) => void): Promise<any> {
 
     const {SID} = req.cookies
 
     if(!SID){
-      return next()
+      throw new SessionIdHasNotBeenProvidedException()
     }
 
-    const session = this.sessionService.isSessionExistAndValid(SID)
+    const session = await this.sessionService.doesSessionExistAndIsValid(SID)
 
     if(!session) throw new SessionHasExpiredException()
 
