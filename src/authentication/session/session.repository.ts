@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { pg_conn } from "../../database/provider-name";
 import { PoolClient } from "pg";
 import { query_builder } from "../../xander_qb/provider-name";
-import { QueryBuilder } from "../../xander_qb/QueryBuilder";
+import { filter, QueryBuilder } from "../../xander_qb/QueryBuilder";
 import { Session, sessions } from "../../entities/Session";
 import { Repository } from "../../shared/abstract/absctract.repository";
 
@@ -13,9 +13,9 @@ export class SessionRepository implements Repository<Session>{
   constructor(@Inject(pg_conn) private db:PoolClient, @Inject(query_builder) private qb: QueryBuilder) {
   }
 
-  async delete(id: number): Promise<void> {
-    return undefined
-
+  async delete(id: number | string): Promise<void> {
+    const deleteSql = this.qb.ofTable(sessions).delete<Session>({where:{session_id: id as string}})
+    await this.db.query(deleteSql)
   }
 
   async getById(id: string): Promise<Session> {
@@ -35,6 +35,10 @@ export class SessionRepository implements Repository<Session>{
 
   async update(id: number, updated: Partial<Session>): Promise<Session> {
     return undefined
+  }
+
+  get(expression: filter<Session>): Promise<Session> {
+    return Promise.resolve(undefined);
   }
 
 

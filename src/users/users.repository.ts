@@ -2,10 +2,9 @@ import { Repository } from "../shared/abstract/absctract.repository";
 import { User, users } from "../entities/User";
 import { Inject } from "@nestjs/common";
 import { query_builder } from "../xander_qb/provider-name";
-import { QueryBuilder } from "../xander_qb/QueryBuilder";
+import { filter, QueryBuilder } from "../xander_qb/QueryBuilder";
 import { pg_conn } from "../database/provider-name";
 import { PoolClient } from "pg";
-import { UserDoesNotExistException } from "../exceptions/user.exceptions";
 
 
 export class UsersRepository implements Repository<User>{
@@ -14,14 +13,14 @@ export class UsersRepository implements Repository<User>{
   }
 
   async delete(id: number): Promise<void | undefined> {
-    return Promise.resolve(undefined);
+    const deleteSql = this.qb.ofTable(users).delete<User>({where:{id}})
+    await this.db.query(deleteSql)
   }
 
   async getById(id: number | string): Promise<User | undefined> {
     const selectSql = this.qb.ofTable(users).select<User>({where:{id: id as number}})
     const {rows} = await this.db.query(selectSql)
-    const user = rows[0] as unknown as (User | undefined)
-    return user
+    return rows[0] as unknown as (User | undefined)
   }
 
   async save(dto: any): Promise<User | undefined> {
@@ -32,7 +31,22 @@ export class UsersRepository implements Repository<User>{
   }
 
   async update(id: number, updated: Partial<User | undefined>): Promise<User> {
-    return Promise.resolve(undefined);
+    const updateSql = this.qb.ofTable(users).update<User>({where:{id:id},set:updated})
+    const {rows} = await this.db.query(updateSql)
+    return rows[0]
+  }
+
+
+  async getAll():Promise<User[]>{
+    const selectSql = this.qb.ofTable(users).select<User>()
+    const {rows} = await this.db.query(selectSql)
+    return rows
+  }
+
+  async get(expression: filter<User>): Promise<User> {
+    const selectSql = this.qb.ofTable(users).select<User>(expression)
+    const {rows} = await this.db.query(selectSql)
+    return rows[0] as unknown as User
   }
 
 

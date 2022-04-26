@@ -32,6 +32,9 @@ exports.up = pgm => {
       notNull: true,
       default: 0
     },
+    assets: {
+      type: ''
+    }
   })
   pgm.createIndex('broker_accounts','user_id')
 };

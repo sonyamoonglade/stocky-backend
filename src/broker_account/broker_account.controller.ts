@@ -24,7 +24,6 @@ export class BrokerAccountController {
     deleteBrokerAccount(@Res() res:Response, @Param('id') id: number){
       return this.brokerAccountService.deleteBrokerAccountById(res,id)
     }
-
     @Put("/updateBrokerAccount/:id")
     updateBrokerAccount(@Res() res: Response,
                         @Body() newAccount: Partial<BrokerAccount>,

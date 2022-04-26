@@ -59,25 +59,24 @@ export class SessionService {
 
   }
 
-  // async getSessionByEncryptedSID(SID: string):Promise<Session>{
-  //   const decryptedId = this.crypt.decrypt(SID)
-  //   return await this.sessionRepository.getById(decryptedId)
-  // }
+  async deAttachCookieFromResponse(res:Response, SID: string): Promise<void>{
+    res.clearCookie('SID')
+    await this.destroySession(SID)
+  }
 
   async doesSessionExistAndIsValid(SID: string):Promise<Session | undefined>{
 
     const sessionId = this.crypt.decrypt(SID).toString()
 
-    const selectQuery = this.qb.ofTable(sessions).select<Session>({where:{session_id:sessionId}})
-
+    const selectQuery = this.qb.ofTable(sessions).select<Session>({where:{session_id: sessionId}})
 
     const {rows} = await this.db.query(selectQuery)
     const session = rows[0] as Session
 
     const sessionTTL = dayjs(session.ttl).unix()
     const currentTime = dayjs().unix()
-    
-    if(sessionTTL - currentTime < 0){
+
+    if(sessionTTL - currentTime > 0){
       return session
     }
 
@@ -85,6 +84,9 @@ export class SessionService {
 
   }
 
+  async destroySession(SID: string):Promise<void>{
+    await this.sessionRepository.delete(SID)
+  }
 
 
 

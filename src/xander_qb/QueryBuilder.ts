@@ -1,7 +1,7 @@
 import e from "express";
 import { find, findIndex } from "rxjs";
 
-interface filter<T> {
+export interface filter<T> {
     where: Partial<T>
     returning?: string[] | '*'
     set? : Partial<T> | T
@@ -141,7 +141,7 @@ export class QueryBuilder  {
 
     public delete<Entity>(expression : Pick<filter<Entity>,'where'>){
         const target = expression.where
-        target['id'] = Number(target['id'])
+        if(target['id']) target['id'] = Number(target['id'])
         const keys = Object.keys(target)
         const values = Object.values(target)
 

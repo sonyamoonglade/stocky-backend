@@ -12,15 +12,16 @@ import { UsersController } from "./users/users.controller";
 
 @Module({
   imports: [UsersModule, BrokerAccountModule,DbModule,QueryBuilderModule, AuthenticationModule],
-  controllers: [BrokerAccountController],
-  providers: [BrokerAccountService],
+  controllers: [],
+  providers: [],
 
 })
 export class AppModule implements NestModule{
   configure(consumer:MiddlewareConsumer){
     consumer.apply(SessionMiddleware)
       .exclude(
-        {path: '/api/v1/users/createUser', method:RequestMethod.POST}
+        {path: '/api/v1/users/createUser', method:RequestMethod.POST},
+        {path: '/api/v1/users/login', method: RequestMethod.POST}
       )
       .forRoutes(
         UsersController,

@@ -19,7 +19,10 @@ export class SessionMiddleware implements NestMiddleware{
 
     const session = await this.sessionService.doesSessionExistAndIsValid(SID)
 
-    if(!session) throw new SessionHasExpiredException()
+    if(!session) {
+      await this.sessionService.destroySession(SID)
+      throw new SessionHasExpiredException();
+    }
 
     req.session = session
 
