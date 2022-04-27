@@ -79,17 +79,19 @@ export class BrokerAccountService {
 
   }
 
-  private async doesBrokerAccountWithNameAlreadyExist(name: string, user_id: number): Promise<void | undefined>{
+  async doesBrokerAccountWithNameAlreadyExist(name: string, user_id: number): Promise<void | undefined | boolean>{
 
     const brokerAccounts = await this.brokerAccountRepository.get({where:{name,user_id}})
     if(brokerAccounts.length) throw new BrokerAccountWithNameAlreadyExists(name,user_id)
 
-    return
+    return false
   }
 
-  private async doesBrokerAccountEvenExist(id: number): Promise<void | undefined | BrokerAccount>{
+  async doesBrokerAccountEvenExist(id: number): Promise<void | undefined | BrokerAccount | boolean>{
     const brokerAccount = this.brokerAccountRepository.getById(id)
     if(!brokerAccount) throw new BrokerAccountDoesNotExist(id)
+
+    return true
   }
 
 

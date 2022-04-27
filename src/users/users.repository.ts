@@ -36,7 +36,6 @@ export class UsersRepository implements Repository<User>{
     return rows[0]
   }
 
-
   async getAll():Promise<User[]>{
     const selectSql = this.qb.ofTable(users).select<User>()
     const {rows} = await this.db.query(selectSql)
@@ -48,7 +47,6 @@ export class UsersRepository implements Repository<User>{
     const {rows} = await this.db.query(selectSql)
     return rows[0] as unknown as User
   }
-
 
 
 }

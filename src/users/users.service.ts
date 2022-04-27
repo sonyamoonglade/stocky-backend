@@ -37,10 +37,6 @@ export class UsersService {
 
   async login(res:Response, loginUserDto:LoginUserDto){
 
-    const {email} = loginUserDto
-
-    if(!email) return this.loginWithUsername(loginUserDto,res)
-
     return this.loginWithEmail(loginUserDto,res)
 
   }
@@ -116,24 +112,6 @@ export class UsersService {
     const users = await this.usersRepository.getAll()
 
     return res.status(200).send({error:'', result: users})
-  }
-
-  private async loginWithUsername(dto: LoginUserDto, res: Response): Promise<Response>{
-    const {firstname, lastname, password: inputPassword} = dto
-    const username = convertToUsername(firstname,lastname)
-
-    const {
-      id: user_id,
-      password: hash_password
-    } = await this.usersRepository.get({where:{firstname,lastname}})
-
-    const comparePasswordResult = await bcrypt.compare(inputPassword, hash_password)
-    if(!comparePasswordResult) throw new InvalidPasswordException()
-
-    const SID:string = await this.sessionService.createSession(user_id,username)
-    await this.sessionService.attachCookieToResponse(res, SID)
-
-    return res.status(200).end()
   }
 
   private async loginWithEmail(dto: LoginUserDto, res: Response): Promise<Response>{

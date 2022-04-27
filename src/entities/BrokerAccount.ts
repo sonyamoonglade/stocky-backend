@@ -15,9 +15,11 @@ export class BrokerAccount {
               asset_quantity?: number,
               name?:string,
               balance?: number,
-              currency_type?: CurrencyType) {
+              currency_type?: CurrencyType,
+              id?: number) {
 
     this.user_id = user_id;
+    this.id = id;
     this.asset_quantity = asset_quantity;
     this.balance = balance;
     this.name = name;
