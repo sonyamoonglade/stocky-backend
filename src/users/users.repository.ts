@@ -42,10 +42,10 @@ export class UsersRepository implements Repository<User>{
     return rows
   }
 
-  async get(expression: filter<User>): Promise<User> {
+  async get(expression: filter<User>): Promise<User[]> {
     const selectSql = this.qb.ofTable(users).select<User>(expression)
     const {rows} = await this.db.query(selectSql)
-    return rows[0] as unknown as User
+    return rows as User []
   }
 
 

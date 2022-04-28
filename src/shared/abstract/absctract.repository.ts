@@ -12,7 +12,7 @@ export abstract class Repository<T> {
 
   abstract update(id: number, updated: Partial<T | undefined>): Promise<T>
 
-  abstract get(expression: filter<T>): Promise<T>
+  abstract get(expression: filter<T>): Promise<T[]>
 
 }
 

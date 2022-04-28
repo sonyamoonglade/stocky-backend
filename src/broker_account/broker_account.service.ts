@@ -88,7 +88,7 @@ export class BrokerAccountService {
   }
 
   async doesBrokerAccountEvenExist(id: number): Promise<void | undefined | BrokerAccount | boolean>{
-    const brokerAccount = this.brokerAccountRepository.getById(id)
+    const brokerAccount = await this.brokerAccountRepository.getById(id)
     if(!brokerAccount) throw new BrokerAccountDoesNotExist(id)
 
     return true

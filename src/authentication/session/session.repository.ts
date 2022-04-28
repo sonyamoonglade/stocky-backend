@@ -37,7 +37,7 @@ export class SessionRepository implements Repository<Session>{
     return undefined
   }
 
-  get(expression: filter<Session>): Promise<Session> {
+  get(expression: filter<Session>): Promise<Session[]> {
     return Promise.resolve(undefined);
   }
 

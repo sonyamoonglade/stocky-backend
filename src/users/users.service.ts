@@ -1,18 +1,19 @@
-import {Inject, Injectable, Req} from "@nestjs/common";
+import { Inject, Injectable, Req } from "@nestjs/common";
 
 import { PoolClient } from "pg";
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from "bcrypt";
 import { Request, Response } from "express";
 
 import { pg_conn } from "../database/provider-name";
 import { query_builder } from "../xander_qb/provider-name";
 import {
-  EmailHasBeenAlreadyTakenException, InvalidPasswordException,
+  EmailHasBeenAlreadyTakenException,
+  InvalidPasswordException,
   UserDoesNotExistException
 } from "../exceptions/user.exceptions";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { QueryBuilder } from "../xander_qb/QueryBuilder";
-import { User,users } from "../entities/User";
+import { User } from "../entities/User";
 import { UnexpectedServerError } from "../exceptions/unexpected-errors.exceptions";
 import { LoginUserDto } from "./dto/login-user.dto";
 import { SessionService } from "../authentication/session/session.service";
@@ -34,7 +35,6 @@ export class UsersService {
               private usersRepository:UsersRepository) {
 
   }
-
   async login(res:Response, loginUserDto:LoginUserDto){
 
     return this.loginWithEmail(loginUserDto,res)
@@ -53,7 +53,7 @@ export class UsersService {
 
   async createUser(user:CreateUserDto, res:Response):Promise<Response | User>{
 
-    const emailTakenResult = await this.hasEmailBeenAlreadyTaken(user)
+    const emailTakenResult = await this.hasEmailBeenAlreadyTaken(user.email)
     if(emailTakenResult) throw new EmailHasBeenAlreadyTakenException()
 
     try {
@@ -114,14 +114,14 @@ export class UsersService {
     return res.status(200).send({error:'', result: users})
   }
 
-  private async loginWithEmail(dto: LoginUserDto, res: Response): Promise<Response>{
+  async loginWithEmail(dto: LoginUserDto, res: Response): Promise<Response>{
     const {email, password: inputPassword} = dto
     const {
       id: user_id,
       firstname,
       lastname,
       password: hash_password
-    } = await this.usersRepository.get({where:{email}})
+    } = (await this.usersRepository.get({where:{email}}))[0]
 
     const username = convertToUsername(firstname,lastname)
 
@@ -134,13 +134,13 @@ export class UsersService {
     return res.status(200).end()
   }
 
-  private async hasEmailBeenAlreadyTaken(user:CreateUserDto):Promise<boolean>{
-    const sql = this.qb.ofTable(users).select<User>({where:{email: user.email}})
-    const { rowCount } = await this.db.query(sql)
-    return rowCount > 0
+  async hasEmailBeenAlreadyTaken(email: string):Promise<boolean>{
+    const users = await this.usersRepository.get({ where: { email }})
+
+    return !!users.length
   }
 
-  private async doesUserEvenExist(id: number):Promise<void | undefined | User>{
+  async doesUserEvenExist(id: number):Promise<void | undefined | User>{
     const user = await this.usersRepository.getById(id)
     if(!user) {
       throw new UserDoesNotExistException(id);

@@ -5,7 +5,6 @@ import { query_builder } from "../xander_qb/provider-name";
 import { filter, QueryBuilder } from "../xander_qb/QueryBuilder";
 import { pg_conn } from "../database/provider-name";
 import { PoolClient } from "pg";
-import { BrokerAccountDoesNotExist } from "../exceptions/broker_account.exceptions";
 
 
 @Injectable()
@@ -23,9 +22,8 @@ export class BrokerAccountRepository implements Repository<BrokerAccount>{
     const selectSql = this.qb.ofTable(broker_accounts).select<BrokerAccount>({where:{id: id as number}})
 
     const {rows} = await this.db.query(selectSql)
-    if(!rows[0]) throw new BrokerAccountDoesNotExist(id as number)
 
-    return rows[0] as unknown as BrokerAccount
+    return rows[0] as unknown as BrokerAccount | undefined
   }
 
   async save(dto: any, user_id): Promise<BrokerAccount | undefined> {
@@ -41,10 +39,11 @@ export class BrokerAccountRepository implements Repository<BrokerAccount>{
     return rows[0] as unknown as BrokerAccount
   }
 
-  async get(expression: filter<BrokerAccount>){
+  async get(expression: filter<BrokerAccount>):Promise<BrokerAccount[] | undefined>{
     const selectSql = this.qb.ofTable(broker_accounts).select<BrokerAccount>(expression)
     const {rows} = await this.db.query(selectSql)
-    return rows
+    return rows as BrokerAccount []
+
   }
 
 
